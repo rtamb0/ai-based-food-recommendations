@@ -1,0 +1,66 @@
+# =========================
+# OS / Editor junk
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+
+# Jupyter / Colab
+.ipynb_checkpoints/
+
+# =========================
+# ML artifacts (important)
+# =========================
+*.pkl
+*.joblib
+*.h5
+*.onnx
+
+# If you want to keep a sample model, whitelist it:
+# !models/sample_model.pkl
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Node (in case someone installs it)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# =========================
+# Build / dist (future-proof)
+# =========================
+dist/
+build/
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+
+# =========================
+# Secrets
+# =========================
+*.key
+*.pem
+*.secret
