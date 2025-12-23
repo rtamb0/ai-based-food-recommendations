@@ -134,7 +134,7 @@ function submit() {
         <option>Automobile</option>
         <option>Walking</option>
         <option>Motorbike</option>
-        <option>Bike</option>
+        <option>Bicycle</option>
       </select>
     </section>
 
