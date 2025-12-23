@@ -3,8 +3,19 @@ from pydantic import BaseModel, Field
 import joblib
 import pandas as pd
 from enum import Enum
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5174",  # Vite default
+        "http://127.0.0.1:5174",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 model = joblib.load("model/nutrition_risk_model.pkl")
 feature_encoders = joblib.load("model/feature_encoders.pkl")
