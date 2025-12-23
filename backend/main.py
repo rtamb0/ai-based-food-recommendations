@@ -1,7 +1,8 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 import joblib
 import pandas as pd
+from enum import Enum
 
 app = FastAPI()
 
@@ -54,9 +55,6 @@ def infer_nutrient_risks(user_data, nutrition_risk):
             "Micronutrient imbalance"
         ])
 
-    elif nutrition_risk == "BALANCED":
-        nutrient_risks.add("No major nutritional risk detected")
-
     # ==============================
     # 2. Vegetable Intake (FCVC)
     # ==============================
@@ -76,6 +74,8 @@ def infer_nutrient_risks(user_data, nutrition_risk):
     # ==============================
     if user_data["NCP"] < 3:
         nutrient_risks.add("Inconsistent energy intake")
+    if user_data["NCP"] < 3 and nutrition_risk == "UNDER_NUTRITION":
+        nutrient_risks.add("Meal frequency insufficient for energy needs")
 
     if user_data["CAEC"] == "Frequently":
         nutrient_risks.update([
@@ -103,11 +103,14 @@ def infer_nutrient_risks(user_data, nutrition_risk):
 
     elif user_data["FAF"] >= 3:
         nutrient_risks.add("Increased protein requirement")
+        
+    if nutrition_risk == "UNDER_NUTRITION" and user_data["FAF"] >= 2:
+        nutrient_risks.add("Increased energy requirement")
 
     # ==============================
     # 6. Screen Time (TUE)
     # ==============================
-    if user_data["TUE"] >= 3:
+    if user_data["TUE"] == 2:
         nutrient_risks.add("Sedentary lifestyle risk")
 
     # ==============================
@@ -141,34 +144,70 @@ def infer_nutrient_risks(user_data, nutrition_risk):
     # ==============================
     # 10. Transportation (MTRANS)
     # ==============================
-    if user_data["MTRANS"] in ["Automobile", "Motorbike"]:
+    if user_data["MTRANS"] == "Automobile":
         nutrient_risks.add("Low daily physical activity")
+    elif user_data["MTRANS"] == "Motorbike":
+        nutrient_risks.add("Mostly sedentary commuting")
+    elif user_data["MTRANS"] == "Public_Transportation":
+        nutrient_risks.add("Moderate incidental physical activity")
+    elif user_data["MTRANS"] == "Walking":
+        nutrient_risks.add("High incidental physical activity")
+
+    if not nutrient_risks:
+        nutrient_risks.add("No major nutritional risk detected")
 
     return sorted(nutrient_risks)
 
+class YesNo(str, Enum):
+    yes = "yes"
+    no = "no"
+
+class Frequency(str, Enum):
+    no = "no"
+    Sometimes = "Sometimes"
+    Frequently = "Frequently"
+    Always = "Always"
+    
+class Transportation(str, Enum):
+    Walking = "Walking"
+    Bicycle = "Bicycle"
+    Automobile = "Automobile"
+    Motorbike = "Motorbike"
+    Public_Transportation = "Public_Transportation"
+    
 class UserInput(BaseModel):
-    Age: int
-    Height: float
-    Weight: float
-    FCVC: int
-    FAVC: str
-    NCP: float
-    CAEC: str
-    CH2O: float
-    FAF: float
-    TUE: int
-    SMOKE: str
-    CALC: str
-    MTRANS: str
-    SCC: str
+    Age: int = Field(ge=1, le=125)
+    Height: float = Field(ge=0.5, le=2.8)     # meters
+    Weight: float = Field(ge=2, le=700)       # kg
+
+    FCVC: int = Field(ge=1, le=3)
+    FAVC: YesNo 
+    NCP: int = Field(ge=1, le=4)
+    CAEC: Frequency
+
+    CH2O: float = Field(ge=1, le=3)
+    FAF: int = Field(ge=0, le=3)
+    TUE: int = Field(ge=0, le=2)
+
+    SMOKE: YesNo
+    CALC: Frequency
+    MTRANS: Transportation
+    SCC: YesNo
 
 @app.post("/predict")
 def predict(data: UserInput):
-    df = pd.DataFrame([data.model_dump()], columns=FEATURES)
+    df = pd.DataFrame([data.model_dump()])
+    df = df[FEATURES]
 
     # Encode categoricals
     for col, encoder in feature_encoders.items():
-        df[col] = encoder.transform(df[col])
+        try:
+            df[col] = encoder.transform(df[col])
+        except ValueError as e:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid value for {col}: {str(e)}"
+            )
 
     # ML prediction
     pred = model.predict(df)[0]
