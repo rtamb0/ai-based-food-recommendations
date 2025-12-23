@@ -34,15 +34,25 @@ function submit() {
     <!-- BODY -->
     <section>
       <h2>Basic Information</h2>
-      <input v-model.number="form.Age" type="number" placeholder="Age" />
+      <input
+        v-model.number="form.Age"
+        type="number"
+        placeholder="Age"
+        min="1"
+        max="125"
+      />
       <input
         v-model.number="form.Height"
         type="number"
+        min="0.5"
+        max="2.8"
         step="0.01"
         placeholder="Height (m)"
       />
       <input
         v-model.number="form.Weight"
+        min="2"
+        max="700"
         type="number"
         placeholder="Weight (kg)"
       />
@@ -138,6 +148,6 @@ function submit() {
       </select>
     </section>
 
-    <button @click="submit">Analyze</button>
+    <button @click="submit">Analyse</button>
   </div>
 </template>
