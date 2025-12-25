@@ -7,7 +7,7 @@ const loading = ref(true);
 onMounted(async () => {
   const input = JSON.parse(localStorage.getItem("userInput"));
 
-  const res = await fetch("http://127.0.0.1:8081/predict", {
+  const res = await fetch("http://127.0.0.1:8000/predict", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
