@@ -2,83 +2,105 @@
 
 ## Backend Setup (Windows)
 
-# Uses FastAPI + scikit-learn
+FastAPI + scikit-learn  
+Python 3.12 required (scikit-learn does NOT support Python 3.14)
 
-# Requires Python 3.12 (scikit-learn does NOT support 3.14)
+### 1. Install Python 3.12
 
-# 1. Install Python 3.12
+Download: https://www.python.org/downloads/  
+During install: check "Add Python to PATH"
 
-# Download: https://www.python.org/downloads/
+Verify:
 
-# During install: check "Add Python to PATH"
-
-# Verify installation:
-
+```bash
 py -0
+```
 
-# 2. Clone the repository
+### 2. Clone repository
 
+```bash
 git clone <REPO_URL>
 cd backend
+```
 
-# 3. Create virtual environment (Python 3.12)
+### 3. Create virtual environment
 
+```bash
 py -3.12 -m venv .venv
+```
 
-# 4. Activate virtual environment
+### 4. Activate virtual environment
 
-# Git Bash:
-
+```bash
+# Git Bash
 source .venv/Scripts/activate
 
-# PowerShell:
+# PowerShell
+.\.venv\Scripts\Activate.ps1
+```
 
-# .\.venv\Scripts\Activate.ps1
+### 5. Verify Python version
 
-# 5. Verify Python version
-
+```bash
 python --version
+```
 
-# 6. Install dependencies
+### 6. Install dependencies
 
+```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
 
-# 7. Run the server
+### 7. Run backend server
 
+```bash
 uvicorn main:app --reload
+```
 
-# 8. Open API docs
+### 8. Open API docs
 
-# http://127.0.0.1:8000/docs
+```text
+http://127.0.0.1:8000/docs
+```
 
-# -----------------------------------------------
+---
 
 ## Frontend Setup
 
-# Uses Vite + Node.js
+Vite + Node.js
 
-# 1. Install Node.js (LTS)
+### 1. Install Node.js (LTS)
 
-# Download: https://nodejs.org/
+Download: https://nodejs.org/
 
-# Make sure npm is included
+Verify:
 
+```bash
 node -v
 npm -v
+```
 
-# 2. Go to frontend directory
+### 2. Go to frontend directory
 
+```bash
 cd frontend
+```
 
-# 3. Install dependencies
+### 3. Install dependencies
 
+```bash
 npm install
+```
 
-# 4. Start development server
+### 4. Start frontend server
 
+```bash
 npm run dev
+```
 
-# 5. Open the app
+### 5. Open app
 
-# http://localhost:5174
+```text
+http://localhost:5174
+```
