@@ -51,3 +51,34 @@ uvicorn main:app --reload
 # 8. Open API docs
 
 # http://127.0.0.1:8000/docs
+
+# -----------------------------------------------
+
+## Frontend Setup
+
+# Uses Vite + Node.js
+
+# 1. Install Node.js (LTS)
+
+# Download: https://nodejs.org/
+
+# Make sure npm is included
+
+node -v
+npm -v
+
+# 2. Go to frontend directory
+
+cd frontend
+
+# 3. Install dependencies
+
+npm install
+
+# 4. Start development server
+
+npm run dev
+
+# 5. Open the app
+
+# http://localhost:5174
