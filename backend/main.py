@@ -4,13 +4,21 @@ import joblib
 import pandas as pd
 from enum import Enum
 from fastapi.middleware.cors import CORSMiddleware
+from genai import generate_ai_recommendation
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ENABLE_GENAI = os.getenv("ENABLE_GENAI", "true").lower() == "true"
+
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5174",  # Vite default
-        "http://127.0.0.1:5174",
+        "http://localhost:5173",  # Vite default
+        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -226,8 +234,28 @@ def predict(data: UserInput):
 
     # Rule-based nutrient inference
     nutrient_risks = infer_nutrient_risks(data.model_dump(), nutrition_risk)
+    
+    # GenAI layer (safe, non-blocking)
+    if ENABLE_GENAI:
+        try:
+            ai_result = generate_ai_recommendation(
+            nutrition_risk=nutrition_risk,
+            nutrient_risks=nutrient_risks,
+            user_context=data.model_dump()
+            )
+        except Exception as e:
+            print("GenAI error:", e)
+            ai_result = {
+                "explanation": "AI explanation is currently unavailable.",
+                "nutrients": [],
+                "food_categories": []
+            }
+    else:
+        ai_result = None
 
     return {
         "nutrition_risk": nutrition_risk,
-        "nutrient_risks": nutrient_risks
+        "nutrient_risks": nutrient_risks,
+        "ai": ai_result
     }
+
