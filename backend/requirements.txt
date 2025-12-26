@@ -13,6 +13,7 @@ pydantic>=2.6.0
 
 # GenAI (Gemini)
 google-genai>=0.3.0
+google-api-core>=2.17.0
 
 # Environment variables (recommended)
 python-dotenv>=1.0.1

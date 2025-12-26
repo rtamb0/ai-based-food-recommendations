@@ -3,6 +3,8 @@ from google import genai
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Literal
+import time
+from google.api_core.exceptions import ResourceExhausted, ServiceUnavailable
 
 load_dotenv()
 
@@ -49,6 +51,29 @@ def normalize_food_groups(food_groups: List[FoodGroup]) -> List[FoodGroup]:
         for meal, data in merged.items()
     ]
 
+def call_gemini_with_retry(prompt: str, max_retries: int = 2):
+    for attempt in range(max_retries + 1):
+        try:
+            return client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_json_schema": NutritionAdvice.model_json_schema(),
+                    "temperature": 0.2,
+                    "max_output_tokens": 4096,
+                },
+            )
+
+        except ResourceExhausted:
+            if attempt >= max_retries:
+                raise RuntimeError("Gemini rate limit exceeded")
+            time.sleep(2 ** attempt)
+
+        except ServiceUnavailable:
+            if attempt >= max_retries:
+                raise RuntimeError("Gemini temporarily unavailable")
+            time.sleep(2 ** attempt)
 
 def generate_ai_recommendation(nutrition_risk, nutrient_risks, user_context):
     prompt = f"""
@@ -92,18 +117,26 @@ def generate_ai_recommendation(nutrition_risk, nutrient_risks, user_context):
     - Simple, non-clinical language
     """
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config={
-            "response_mime_type": "application/json",
-            "response_json_schema": NutritionAdvice.model_json_schema(),
-            "temperature": 0.2,
-            "max_output_tokens": 4096,
-        },
-    )
+    try:
+        response = call_gemini_with_retry(prompt)
+        print("Gemini response received" + str(response))
+    except RuntimeError:
+        return NutritionAdvice(
+            explanation="We could not generate personalized advice at the moment.",
+            nutrients=[],
+            food_groups=[]
+        )
+
     if response.parsed is None:
         raise RuntimeError(
             f"GenAI output truncated (finish_reason={response.candidates[0].finish_reason})"
         )
-    return response.parsed
+    
+    raw = response.parsed
+
+    parsed = NutritionAdvice.model_validate(raw)
+    parsed.food_groups = normalize_food_groups(parsed.food_groups)
+    print("GenAI response:", parsed)
+    
+    return parsed.model_dump()
+
