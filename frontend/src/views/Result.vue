@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const result = ref(null);
@@ -46,6 +46,15 @@ const refreshResults = async () => {
   localStorage.removeItem("cachedUserInput");
   await fetchResults(true);
 };
+
+const spoonacularRateLimited = computed(() => {
+  const noEmptyRecipe = result.value.ai.spoonacular.every(category => category.recipes || category.recipes.length > 0)
+  if (!result.value || !result.value.ai || !result.value.ai.spoonacular || noEmptyRecipe) {
+    return false;
+  } else {
+    return true;
+  }
+});
 
 </script>
 
@@ -184,7 +193,7 @@ const refreshResults = async () => {
       </div>
 
       <!-- Recipes Section with Pagination per Category -->
-      <div class="mb-5">
+      <div v-if="!spoonacularRateLimited" class="mb-5">
         <h2 class="mb-3 text-primary">Suggested Recipes</h2>
         <div v-for="recipeCategory in result.ai.spoonacular" :key="recipeCategory.meal_type" class="mb-5">
           <h4 class="text-capitalize">{{ recipeCategory.meal_type }}</h4>
@@ -257,6 +266,9 @@ const refreshResults = async () => {
             </button>
           </div>
         </div>
+      </div>
+      <div v-else class="alert alert-warning" role="alert">
+        Recipe suggestions are currently unavailable due to API rate limiting. Please try refreshing later.
       </div>
     </div>
   </div>
