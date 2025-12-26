@@ -20,6 +20,34 @@ class NutritionAdvice(BaseModel):
     explanation: str
     nutrients: List[str]
     food_groups: List[FoodGroup]
+    
+def normalize_food_groups(food_groups: List[FoodGroup]) -> List[FoodGroup]:
+    merged = {}
+
+    for group in food_groups:
+        meal = group.meal_type
+
+        if meal not in merged:
+            merged[meal] = {
+                "meal_type": meal,
+                "ingredients": {}
+            }
+
+        for item in group.ingredients:
+            # Avoid duplicate ingredients by name
+            if item.name not in merged[meal]["ingredients"]:
+                merged[meal]["ingredients"][item.name] = item.reason
+
+    return [
+        FoodGroup(
+            meal_type=meal,
+            ingredients=[
+                FoodItem(name=name, reason=reason)
+                for name, reason in data["ingredients"].items()
+            ]
+        )
+        for meal, data in merged.items()
+    ]
 
 
 def generate_ai_recommendation(nutrition_risk, nutrient_risks, user_context):
