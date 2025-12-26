@@ -55,7 +55,7 @@ pip install -r requirements.txt
 ### 7. Run backend server
 
 ```bash
-uvicorn main:app --reload
+python -m uvicorn main:app --reload
 ```
 
 ### 8. Open API docs
