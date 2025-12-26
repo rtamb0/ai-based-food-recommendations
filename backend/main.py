@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from genai import generate_ai_recommendation
 import os
 from dotenv import load_dotenv
+from spoonacular import enrich_food_groups_with_spoonacular
 
 load_dotenv()
 
@@ -239,16 +240,28 @@ def predict(data: UserInput):
     if ENABLE_GENAI:
         try:
             ai_result = generate_ai_recommendation(
-            nutrition_risk=nutrition_risk,
-            nutrient_risks=nutrient_risks,
-            user_context=data.model_dump()
+                nutrition_risk=nutrition_risk,
+                nutrient_risks=nutrient_risks,
+                user_context=data.model_dump()
             )
+
+            # Spoonacular enrichment
+            spoonacular_result = enrich_food_groups_with_spoonacular(
+                food_groups=ai_result["food_groups"]
+            )
+
+            ai_result = {
+                **ai_result,
+                "spoonacular": spoonacular_result
+            }
+
         except Exception as e:
-            print("GenAI error:", e)
+            print("GenAI / Spoonacular error:", e)
             ai_result = {
                 "explanation": "AI explanation is currently unavailable.",
                 "nutrients": [],
-                "food_categories": []
+                "foods": [],
+                "spoonacular": []
             }
     else:
         ai_result = None

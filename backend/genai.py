@@ -2,7 +2,7 @@ import os
 from google import genai
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List
+from typing import List, Literal
 
 load_dotenv()
 
@@ -12,11 +12,14 @@ class FoodItem(BaseModel):
     name: str
     reason: str
 
+class FoodGroup(BaseModel):
+    meal_type: Literal["breakfast", "main", "snack"]
+    ingredients: List[FoodItem]
+
 class NutritionAdvice(BaseModel):
     explanation: str
     nutrients: List[str]
-    foods: List[FoodItem]
-
+    food_groups: List[FoodGroup]
 
 
 def generate_ai_recommendation(nutrition_risk, nutrient_risks, user_context):
@@ -32,7 +35,27 @@ def generate_ai_recommendation(nutrition_risk, nutrient_risks, user_context):
     Tasks:
     1. Explain the nutrition risks simply
     2. Identify nutrients to prioritize
-    3. Suggest some food according to the nutrition risks. Food suggestions must be specific ingredients or ingredient groups that are searchable in the Spoonacular API. Avoid abstract categories. Each food item should be something a user can search for directly (e.g. "broccoli", "oats", "salmon", not "vegetables" or "healthy fats").
+    3. Suggest foods grouped by compatible meal usage.
+
+    Food grouping rules:
+    - Group foods that naturally go together
+    - Each group should represent ONE possible meal or eating context
+    - Each food must be a specific ingredient searchable in the Spoonacular API
+    - Avoid abstract categories (no "vegetables", "healthy fats")
+
+    Meal types allowed:
+    - breakfast
+    - main
+    - snack
+
+    Output structure:
+    - food_groups: list of groups
+    - Each group has:
+    - meal_type
+    - ingredients (name + reason)
+
+    Do NOT generate recipes.
+    Do NOT combine incompatible foods.
 
     Rules:
     - No recipes
