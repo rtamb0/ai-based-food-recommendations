@@ -1,79 +1,58 @@
-import json
 import os
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from typing import List
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-model = genai.GenerativeModel(
-    "gemini-1.5-flash",
-    generation_config={
-        "temperature": 0.2,
-        "top_p": 0.8,
-        "max_output_tokens": 512
-    }
-)
+class FoodItem(BaseModel):
+    name: str
+    reason: str
 
-def parse_llm_json(text: str):
-    try:
-        text = text.strip()
+class NutritionAdvice(BaseModel):
+    explanation: str
+    nutrients: List[str]
+    foods: List[FoodItem]
 
-        if "```" in text:
-            parts = text.split("```")
-            for part in parts:
-                part = part.strip()
-                if part.startswith("{"):
-                    return json.loads(part)
-
-        return json.loads(text)
-    except Exception as e:
-        print("LLM parse error:", e)
-        print("Raw response:", text)
-        return {
-            "explanation": "Unable to generate explanation at this time.",
-            "nutrients": [],
-            "food_categories": []
-        }
 
 
 def generate_ai_recommendation(nutrition_risk, nutrient_risks, user_context):
     prompt = f"""
-    Return ONLY raw JSON.
-    Do NOT include markdown, comments, or extra text.
+    You are a nutrition assistant.
 
     User context:
     - Age: {user_context['Age']}
-    - Activity level (FAF scale: 0=very low, 1=low, 2=moderate, 3=high): {user_context['FAF']}
+    - Activity level (FAF scale 0–3): {user_context['FAF']}
     - Nutrition risk: {nutrition_risk}
     - Nutrient risks: {', '.join(nutrient_risks)}
 
-    You are a nutrition assistant.
+    Tasks:
+    1. Explain the nutrition risks simply
+    2. Identify nutrients to prioritize
+    3. Suggest some food according to the nutrition risks. Food suggestions must be specific ingredients or ingredient groups that are searchable in the Spoonacular API. Avoid abstract categories. Each food item should be something a user can search for directly (e.g. "broccoli", "oats", "salmon", not "vegetables" or "healthy fats").
 
     Rules:
-    - Do NOT generate recipes
-    - Do NOT generate images
-    - Do NOT generate URLs
-    - Do NOT give medical advice
-    - Use simple, non-clinical language
-    - Output MUST be valid JSON
-
-    Task:
-    1. Explain the user's nutrition risks simply
-    2. Identify nutrients that should be prioritized
-    3. Suggest general food categories only
-
-    JSON format:
-    {{
-    "explanation": "string",
-    "nutrients": ["string"],
-    "food_categories": ["string"]
-    }}
-    
-    Return ONLY raw JSON.
-    The response must start with "{" and end with "}".
-
+    - No recipes
+    - No medical advice
+    - No URLs
+    - Simple, non-clinical language
     """
-    response = model.generate_content(prompt)
-    return parse_llm_json(response.text)
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config={
+            "response_mime_type": "application/json",
+            "response_json_schema": NutritionAdvice.model_json_schema(),
+            "temperature": 0.2,
+            "max_output_tokens": 4096,
+        },
+    )
+    if response.parsed is None:
+        raise RuntimeError(
+            f"GenAI output truncated (finish_reason={response.candidates[0].finish_reason})"
+        )
+    return response.parsed
