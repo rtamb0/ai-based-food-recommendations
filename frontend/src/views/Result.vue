@@ -24,7 +24,7 @@ const fetchResults = async (forceRefresh = false) => {
 
   loading.value = true;
 
-  const res = await fetch("http://127.0.0.1:8000/predict", {
+  const res = await fetch("https://ai-based-food-recommendations-production.up.railway.app/predict", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
