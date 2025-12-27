@@ -24,17 +24,6 @@ pip-wheel-metadata/
 .ipynb_checkpoints/
 
 # =========================
-# ML artifacts (important)
-# =========================
-*.pkl
-*.joblib
-*.h5
-*.onnx
-
-# If you want to keep a sample model, whitelist it:
-# !models/sample_model.pkl
-
-# =========================
 # Logs
 # =========================
 *.log
