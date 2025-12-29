@@ -20,7 +20,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",  # Vite default
         "http://127.0.0.1:5173",
-        "https://ai-based-food-recommendations.vercel.app/"
+        "https://ai-based-food-recommendations.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
