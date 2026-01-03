@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
+// Form data that includes all fields
 const form = reactive({
   Age: null,
   Height: null,
@@ -21,6 +22,7 @@ const form = reactive({
   MTRANS: "",
 });
 
+// Track which fields have been touched
 const touched = reactive({
   Age: false,
   Height: false,
@@ -38,6 +40,7 @@ const touched = reactive({
   MTRANS: false,
 });
 
+// Error validation logic for all fields
 const errors = computed(() => {
   const e = {};
 
@@ -100,17 +103,36 @@ const errors = computed(() => {
   return e;
 });
 
+// Check if the entire form is valid
 const isValid = computed(() => Object.keys(errors.value).length === 0);
 
+// Mark a field as touched when blurred
 function markTouched(field) {
   touched[field] = true;
 }
 
+// Handle the form submission
 function submit() {
   if (!isValid.value) return;
 
   localStorage.setItem("userInput", JSON.stringify(form));
   router.push("/result");
+}
+
+// Pagination logic
+const currentPage = reactive({ value: 0 });
+const totalPages = computed(() => 4);
+
+function goToNextPage() {
+  if (currentPage.value < totalPages.value - 1) {
+    currentPage.value++;
+  }
+}
+
+function goToPreviousPage() {
+  if (currentPage.value > 0) {
+    currentPage.value--;
+  }
 }
 </script>
 
@@ -118,8 +140,8 @@ function submit() {
   <div class="container my-5">
     <h1 class="text-center mb-4">Nutrition & Lifestyle Assessment</h1>
 
-    <!-- Basic Information Section -->
-    <section class="mb-5">
+    <!-- Page 1: Basic Information -->
+    <section v-if="currentPage.value === 0" class="mb-5">
       <h2 class="h4 mb-3">Basic Information</h2>
       <div class="form-group mb-3">
         <label for="age">Age</label>
@@ -137,7 +159,6 @@ function submit() {
           {{ errors.Age }}
         </div>
       </div>
-
       <div class="form-group mb-3">
         <label for="height">Height (meters)</label>
         <input
@@ -146,16 +167,12 @@ function submit() {
           v-model.number="form.Height"
           @blur="markTouched('Height')"
           type="number"
-          min="0.5"
-          max="2.8"
-          step="0.01"
           placeholder="Height (m)"
         />
         <div v-if="touched.Height && errors.Height" class="text-danger mt-2">
           {{ errors.Height }}
         </div>
       </div>
-
       <div class="form-group mb-3">
         <label for="weight">Weight (kg)</label>
         <input
@@ -163,8 +180,6 @@ function submit() {
           id="weight"
           v-model.number="form.Weight"
           @blur="markTouched('Weight')"
-          min="2"
-          max="700"
           type="number"
           placeholder="Weight (kg)"
         />
@@ -174,8 +189,8 @@ function submit() {
       </div>
     </section>
 
-    <!-- Diet Habits Section -->
-    <section class="mb-5">
+    <!-- Page 2: Diet Habits -->
+    <section v-if="currentPage.value === 1" class="mb-5">
       <h2 class="h4 mb-3">Diet Habits</h2>
       <div class="form-group mb-3">
         <label for="fcvc">Vegetable Intake</label>
@@ -194,9 +209,8 @@ function submit() {
           {{ errors.FCVC }}
         </div>
       </div>
-
       <div class="form-group mb-3">
-        <label for="favc">High-calorie foods frequently?</label>
+        <label for="favc">High-calorie Food Intake</label>
         <select
           class="form-control"
           id="favc"
@@ -211,9 +225,8 @@ function submit() {
           {{ errors.FAVC }}
         </div>
       </div>
-
       <div class="form-group mb-3">
-        <label for="ncp">Main meals per day</label>
+        <label for="ncp">Number of Meals</label>
         <select
           class="form-control"
           id="ncp"
@@ -230,9 +243,8 @@ function submit() {
           {{ errors.NCP }}
         </div>
       </div>
-
       <div class="form-group mb-3">
-        <label for="caec">Snacking between meals</label>
+        <label for="caec">Snacking Between Meals</label>
         <select
           class="form-control"
           id="caec"
@@ -249,32 +261,13 @@ function submit() {
           {{ errors.CAEC }}
         </div>
       </div>
-
-      <div class="form-group mb-3">
-        <label for="calc">Alcohol consumption</label>
-        <select
-          class="form-control"
-          id="calc"
-          v-model="form.CALC"
-          @blur="markTouched('CALC')"
-        >
-          <option disabled value="">Select one</option>
-          <option value="no">No</option>
-          <option value="Sometimes">Sometimes</option>
-          <option value="Frequently">Frequently</option>
-          <option value="Always">Always</option>
-        </select>
-        <div v-if="touched.CALC && errors.CALC" class="text-danger mt-2">
-          {{ errors.CALC }}
-        </div>
-      </div>
     </section>
 
-    <!-- Lifestyle Section -->
-    <section class="mb-5">
+    <!-- Page 3: Lifestyle -->
+    <section v-if="currentPage.value === 2" class="mb-5">
       <h2 class="h4 mb-3">Lifestyle</h2>
       <div class="form-group mb-3">
-        <label for="ch2o">Daily water intake</label>
+        <label for="ch2o">Daily Water Intake</label>
         <select
           class="form-control"
           id="ch2o"
@@ -290,9 +283,8 @@ function submit() {
           {{ errors.CH2O }}
         </div>
       </div>
-
       <div class="form-group mb-3">
-        <label for="faf">Physical activity</label>
+        <label for="faf">Physical Activity</label>
         <select
           class="form-control"
           id="faf"
@@ -309,9 +301,8 @@ function submit() {
           {{ errors.FAF }}
         </div>
       </div>
-
       <div class="form-group mb-3">
-        <label for="tue">Screen time</label>
+        <label for="tue">Screen Time</label>
         <select
           class="form-control"
           id="tue"
@@ -327,9 +318,13 @@ function submit() {
           {{ errors.TUE }}
         </div>
       </div>
+    </section>
 
+    <!-- Page 4: Additional Lifestyle -->
+    <section v-if="currentPage.value === 3" class="mb-5">
+      <h2 class="h4 mb-3">Additional Lifestyle</h2>
       <div class="form-group mb-3">
-        <label for="smoke">Do you smoke?</label>
+        <label for="smoke">Do You Smoke?</label>
         <select
           class="form-control"
           id="smoke"
@@ -344,9 +339,26 @@ function submit() {
           {{ errors.SMOKE }}
         </div>
       </div>
-
       <div class="form-group mb-3">
-        <label for="scc">Monitor calorie intake?</label>
+        <label for="calc">Alcohol Consumption</label>
+        <select
+          class="form-control"
+          id="calc"
+          v-model="form.CALC"
+          @blur="markTouched('CALC')"
+        >
+          <option disabled value="">Select one</option>
+          <option value="no">No</option>
+          <option value="Sometimes">Sometimes</option>
+          <option value="Frequently">Frequently</option>
+          <option value="Always">Always</option>
+        </select>
+        <div v-if="touched.CALC && errors.CALC" class="text-danger mt-2">
+          {{ errors.CALC }}
+        </div>
+      </div>
+      <div class="form-group mb-3">
+        <label for="scc">Monitor Calorie Intake?</label>
         <select
           class="form-control"
           id="scc"
@@ -361,9 +373,8 @@ function submit() {
           {{ errors.SCC }}
         </div>
       </div>
-
       <div class="form-group mb-3">
-        <label for="mtrans">Primary transportation</label>
+        <label for="mtrans">Primary Transportation</label>
         <select
           class="form-control"
           id="mtrans"
@@ -383,13 +394,31 @@ function submit() {
       </div>
     </section>
 
-    <button
-      @click="submit"
-      :disabled="!isValid"
-      class="btn btn-primary btn-block"
-    >
-      Analyse
-    </button>
+    <!-- Navigation Buttons -->
+    <div class="d-flex justify-content-between">
+      <button
+        class="btn btn-secondary"
+        :disabled="currentPage.value === 0"
+        @click="goToPreviousPage"
+      >
+        Previous
+      </button>
+      <button
+        class="btn btn-primary"
+        v-if="currentPage.value < totalPages - 1"
+        @click="goToNextPage"
+      >
+        Next
+      </button>
+      <button
+        class="btn btn-success"
+        v-if="currentPage.value === totalPages - 1"
+        :disabled="!isValid"
+        @click="submit"
+      >
+        Submit
+      </button>
+    </div>
   </div>
 </template>
 
